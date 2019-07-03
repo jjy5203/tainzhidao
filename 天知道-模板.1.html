@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>天知道</title>
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/iconfont.css" />
+  <link rel="stylesheet" href="css/main2.css" />
+  <script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+  <style>
+    .tem .iconfont {
+      font-size: 50px;
+    }
+
+    .list-item {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .list-enter-active,
+    .list-leave-active {
+      transition: all 2s;
+    }
+
+    .list-enter,
+    .list-leave-to
+
+    /* .list-leave-active for below version 2.1.8 */
+      {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="app">
+    <div class="search_form">
+      <div class="logo"><img src="img/logo.png" alt="logo" /></div>
+      <div class="form_group">
+        <input type="text" id="search" v-focus class="input_txt" placeholder="请输入查询的天气" v-model.trim="city"
+          @keyup.enter="search" />
+        <button class="input_sub" :class="{loading:isLoading}" @click="search"> 搜 索</button>
+      </div>
+      <div class="hotkey">
+        <a href="javascript:;" @click="city='北京';search()">北京</a>
+        <a href="javascript:;" @click="city='上海';search()">上海</a>
+        <a href="javascript:;" @click="city='广州';search()">广州</a>
+        <a href="javascript:;" @click="city='深圳';search()">深圳</a>
+      </div>
+      <h3 v-show="isShow">温馨提示 : {{ zhuyi }}</h3>
+    </div>
+
+
+    <transition-group name="list" tag="ul" v-on:after-enter="afterEnter" class="weather_list">
+      <li v-for="(item, index) in items" :key="index" :style="{transitionDelay:index*100+'ms'}">
+        <div class="info_type">
+          <!-- 雨 -->
+          <span class="iconfont" v-if="item.type.indexOf('雨')!=-1">&#xe931;</span>
+          <!-- 晴 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('晴')!=-1">&#xe933;</span>
+          <!-- 阴 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('阴')!=-1">&#xe92d;</span>
+          <!-- 雪 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('雪')!=-1">&#xeb87;</span>
+          <!-- 云 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('云')!=-1">&#xeb79;</span>
+          <!-- 雷 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('雷')!=-1">&#xeb77;</span>
+          <!-- 雹 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('雹')!=-1">&#xeb76;</span>
+          <!-- 雾 -->
+          <span class="iconfont" v-else-if="item.type.indexOf('雾')!=-1">&#xeb75;</span>
+        </div>
+        <div class="info_temp">高 <b>{{ item.high.split(' ')[1] }}</b><br />{{ item.low }}</div>
+
+        <div class="info_date">
+          <b>{{ dataCity }}</b>
+          <span>{{item.type}}</span>
+          <span>{{item.date}}</span>
+        </div>
+      </li>
+    </transition-group>
+
+    <!-- 下面是模板 -->
+    <!-- <div class="tem">
+      <h2>模板</h2> -->
+    <!-- 雨 -->
+    <!-- <span class="iconfont">&#xe931;</span> -->
+    <!-- 晴 -->
+    <!-- <span class="iconfont">&#xe933;</span> -->
+    <!-- 阴 -->
+    <!-- <span class="iconfont">&#xe92d;</span> -->
+    <!-- 雪 -->
+    <!-- <span class="iconfont">&#xeb87;</span> -->
+    <!-- 云 -->
+    <!-- <span class="iconfont">&#xeb79;</span> -->
+    <!-- 雷 -->
+    <!-- <span class="iconfont">&#xeb77;</span> -->
+    <!-- 雹 -->
+    <!-- <span class="iconfont">&#xeb76;</span> -->
+    <!-- 雾 -->
+    <!-- <span class="iconfont">&#xeb75;</span> -->
+    <!-- </div> -->
+  </div>
+  <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.bootcss.com/axios/0.19.0/axios.min.js"></script>
+  <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    // 注册一个全局自定义指令 `v-focus`
+    Vue.directive('focus', {
+      // 当被绑定的元素插入到 DOM 中时……
+      inserted: function (el) {
+        // 聚焦元素
+        el.focus()
+      }
+    })
+    const vm = new Vue({
+      el: '#app',
+      data: {
+        city: '',
+        isLoading: false,
+        items: [],
+        zhuyi: '',
+        isShow: false,
+        dataCity: ''
+      },
+      methods: {
+        search() {
+
+          if (this.city == '') {
+            return alert('请输入城市')
+          }
+          this.isLoading = true
+          axios.get("http://wthrcdn.etouch.cn/weather_mini", {
+              params: {
+                city: this.city
+              }
+            })
+            .then(res => {
+              this.dataCity = res.data.data.city
+              this.city = ''
+              console.log(res);
+              setTimeout(() => {
+                this.isLoading = false
+                this.items = res.data.data.forecast
+                console.log(this.items)
+              })
+
+
+              this.zhuyi = res.data.data.ganmao
+              console.log(this.zhuyi);
+              this.isShow = true
+            })
+        },
+        afterEnter(e) {
+          // ...
+          e.style = ''
+        },
+      },
+
+
+    })
+  </script>
+</body>
+
+</html>
